@@ -1,0 +1,531 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RATNA 動畫示範</title>
+<style>
+:root { color-scheme: light; }
+body { margin: 0; min-height: 100vh; background: #DCD7CB; color: #1B1B19; font-family: -apple-system, "PingFang TC", sans-serif; display: flex; align-items: center; justify-content: center; gap: 56px; padding: 32px; box-sizing: border-box; }
+.phone { padding: 11px; border-radius: 52px; background: #161614; box-shadow: 0 24px 50px -20px rgba(0,0,0,.5); }
+.screen { width: 390px; height: 844px; border-radius: 42px; overflow: hidden; background: #E7E3D9; }
+iframe { width: 390px; height: 844px; border: 0; display: block; }
+.side { width: 330px; }
+.side h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: .1em; }
+.side p { margin: 0 0 22px; font-size: 13px; color: #5f5b52; line-height: 1.8; }
+ol { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 4px; }
+li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; align-items: center; padding: 10px 12px; font-size: 14px; line-height: 1.6; color: #8a857a; border-left: 3px solid transparent; transition: all .25s; }
+li::before { content: counter(s); font-size: 12px; }
+li.on { color: #1B1B19; background: #F2EFE8; border-left-color: #8D9A7C; font-weight: 600; }
+button { margin-top: 20px; font: inherit; font-size: 14px; padding: 10px 18px; border: 1px solid #1B1B19; background: none; cursor: pointer; letter-spacing: .1em; }
+</style></head><body>
+<div class="phone"><div class="screen"><iframe id="app" title="手機畫面" srcdoc="&lt;!doctype html&gt;&lt;html lang=&quot;zh-Hant&quot;&gt;&lt;head&gt;&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1,viewport-fit=cover&quot;&gt;&lt;style&gt;:root{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}body{margin:0}[hidden]{display:none!important}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+&lt;script&gt;window.__DEMO=1&lt;/script&gt;
+&lt;title&gt;RATNA 日期選擇器&lt;/title&gt;
+&lt;meta name=&quot;claude:viewport-fit-sides&quot; content=&quot;cover&quot;&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.googleapis.com&quot;&gt;
+&lt;link rel=&quot;preconnect&quot; href=&quot;https://fonts.gstatic.com&quot; crossorigin&gt;
+&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Antonio:wght@100..700&amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;script src=&quot;https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js&quot;&gt;&lt;/script&gt;
+&lt;style&gt;
+/* 單一淺色：D&#x27;ORSAY 提案的亞麻米底＋鼠尾草綠，刻意不跟深色模式。版面：置中紙卡，日期與地點都從下方滑出滾輪 */
+:root {
+  --linen: #E7E3D9; --paper: #F2EFE8; --ink: #1B1B19; --muted: #6F6B61; --line: #CFC8B8; --faint: #B9B2A2;
+  --sage: #8D9A7C; --sage-soft: #DCDFD1; --bottle: #24392F; --warn-bg: #EFE3C8; --warn-fg: #6B4E16;
+  --num: &quot;Antonio&quot;, &quot;PingFang TC&quot;, sans-serif;
+  --zh: -apple-system, &quot;PingFang TC&quot;, &quot;Noto Sans TC&quot;, &quot;Microsoft JhengHei&quot;, sans-serif;
+}
+html, body { background: var(--linen); color: var(--ink); overflow-x: hidden; overscroll-behavior: none; }
+html.lock, html.lock body { overflow: hidden; }
+body { font-family: var(--zh); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.page {
+  max-width: 480px; margin: 0 auto; padding-block: 28px; display: grid; gap: 14px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+header { text-align: center; display: grid; gap: 6px; margin-bottom: 4px; }
+.eyebrow { font-size: 11px; letter-spacing: .34em; color: var(--muted); }
+h1 { margin: 0; font-size: 26px; font-weight: 500; letter-spacing: .24em; text-wrap: balance; }
+
+/* 紙卡：沒設定前只有提示，按完成後數值浮出 */
+.card {
+  position: relative; width: 100%; border: 0; background: var(--paper); border-top: 5px solid var(--sage);
+  padding: 16px 18px 18px; display: grid; justify-items: center; gap: 8px; text-align: center;
+}
+.card:focus-visible { outline: 2px solid var(--bottle); outline-offset: 3px; }
+.card .lbl { font-size: 12px; letter-spacing: .26em; color: var(--muted); }
+.card .body { width: 100%; min-height: 70px; display: grid; place-items: center; }
+#cardPlace .body { min-height: 34px; }
+.card .edit { position: absolute; top: 12px; right: 14px; color: var(--muted); }
+.card:not(.filled) .edit, .card.filled .cue { display: none; }
+
+.cue { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; letter-spacing: .14em; color: var(--muted); }
+.cue .tap { position: relative; width: 24px; height: 24px; flex: none; }
+.card.attn .cue { color: var(--bottle); }
+.card.attn .cue .tap { animation: tap 1.6s ease-in-out infinite; }
+/* 外框光暈放在 ::after，才不會蓋掉卡片本身的進場動畫 */
+.card::after { content: &#x27;&#x27;; position: absolute; inset: -5px 0 0; pointer-events: none; }
+.card.attn::after { animation: glow 1.6s ease-in-out infinite; }
+@keyframes tap { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } 55% { transform: translateY(1px) scale(.94); } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(141,154,124,0); } 50% { box-shadow: 0 0 0 6px rgba(141,154,124,.28); } }
+
+.val { display: grid; justify-items: center; gap: 10px; justify-self: stretch; }
+.val .row { display: flex; align-items: baseline; font-family: var(--num); font-weight: 100; font-size: 44px; line-height: 1; letter-spacing: .02em; }
+.val .clock { margin-left: 16px; font-weight: 200; color: var(--bottle); }
+.val .na { font-family: var(--zh); font-size: 16px; font-weight: 400; letter-spacing: .12em; }
+
+/* 民國・星期：兩側細線從中間往外畫，中文數字字距收攏 */
+.sub-a { display: flex; align-items: center; gap: 10px; width: min(300px, 100%); font-size: 12px; color: var(--muted); }
+.sub-a i { flex: 1; height: 1px; background: var(--ink); opacity: .35; transform: scaleX(0); animation: draw .7s .55s cubic-bezier(.2,.8,.2,1) forwards; }
+.sub-a i:first-child { transform-origin: right; }
+.sub-a i:last-child { transform-origin: left; }
+.sub-a span, .sub-a b { font-weight: 400; letter-spacing: .3em; white-space: nowrap; opacity: 0; animation: spread .9s .75s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes draw { to { transform: scaleX(1); } }
+@keyframes spread { from { opacity: 0; letter-spacing: .9em; } to { opacity: 1; letter-spacing: .3em; } }
+.val .where { font-size: 22px; font-weight: 500; letter-spacing: .12em; }
+.seg { display: inline-block; animation: pop .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 70ms); }
+@keyframes pop { from { opacity: 0; transform: translateY(16px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+
+/* 進場 */
+.rise { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+.rise:nth-child(2) { animation-delay: .08s; } .rise:nth-child(3) { animation-delay: .16s; } .rise:nth-child(4) { animation-delay: .24s; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* 結果：日期和地點都完成才出現 */
+.result { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.result .r { background: var(--paper); border-top: 3px solid var(--sage); padding: 12px 10px 14px; display: grid; gap: 4px; justify-items: center; text-align: center; }
+.result .k { font-size: 12px; color: var(--muted); letter-spacing: .2em; }
+.result .stone { font-size: 24px; font-weight: 600; letter-spacing: .14em; }
+.result .stone small { font-size: 14px; font-weight: 500; letter-spacing: .06em; }
+.result .why { font-size: 11px; color: var(--muted); line-height: 1.6; }
+.note { grid-column: 1 / -1; font-size: 12px; line-height: 1.7; padding: 10px 12px; background: var(--warn-bg); color: var(--warn-fg); }
+.note.ok { background: var(--sage-soft); color: var(--bottle); }
+
+/* 底部面板：關著時完全隱藏，回彈拉到底也看不到 */
+.scrim { position: fixed; inset: 0; background: rgba(27,27,25,.32); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 10; touch-action: none; }
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; z-index: 11; touch-action: none;
+  background: var(--paper); border-radius: 22px 22px 0 0; transform: translateY(105%); visibility: hidden;
+  transition: transform .34s cubic-bezier(.2,.8,.2,1), visibility 0s linear .34s;
+  padding: 10px max(20px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+}
+.open-date .scrim, .open-place .scrim { opacity: 1; pointer-events: auto; }
+.open-date #sDate, .open-place #sPlace { transform: none; visibility: visible; transition: transform .34s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+.sheet:focus { outline: none; }
+.grabber { width: 36px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 10px; }
+.bar { display: grid; grid-template-columns: 64px 1fr 64px; align-items: center; padding-bottom: 12px; }
+.bar h3 { grid-column: 2; margin: 0; text-align: center; font-size: 16px; font-weight: 600; letter-spacing: .12em; }
+.bar .done { grid-column: 3; justify-self: end; background: none; border: 0; color: var(--bottle); font-size: 16px; font-weight: 600; padding: 6px 2px; }
+.heads, .cols { display: grid; }
+.date-grid { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); }
+.place-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
+.heads span { text-align: center; font-size: 11px; color: var(--muted); letter-spacing: .14em; padding-bottom: 6px; }
+.cols { position: relative; }
+.cols::before {
+  content: &#x27;&#x27;; position: absolute; left: 0; right: 0; top: calc(50% - 21px); height: 42px;
+  background: var(--sage-soft); border-radius: 10px;
+}
+.hm { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.colon { font-family: var(--num); font-size: 20px; align-self: center; position: relative; z-index: 1; }
+.hint { margin: 10px 0 0; text-align: center; font-size: 12px; color: var(--muted); }
+
+/* 滾輪：只准上下滑 */
+.wheel {
+  overflow-x: hidden; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain;
+  scroll-snap-type: y mandatory; scrollbar-width: none; position: relative; z-index: 1;
+  -webkit-overflow-scrolling: touch;
+}
+/* 上下淡出用固定的漸層蓋在滾輪上，不用遮罩，滑動時不必重畫 */
+.cols::after {
+  content: &#x27;&#x27;; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(var(--paper), rgba(242,239,232,0) 36%, rgba(242,239,232,0) 64%, var(--paper));
+}
+.wheel::-webkit-scrollbar { display: none; }
+.wheel-item {
+  height: var(--row); display: flex; align-items: center; justify-content: center; white-space: nowrap;
+  scroll-snap-align: center; font-family: var(--num); font-size: 21px; user-select: none; -webkit-user-select: none;
+  cursor: pointer;
+}
+.wheel-item small { font-family: var(--zh); font-size: 11px; color: var(--muted); margin-left: 4px; }
+.wheel-item.ph { color: var(--faint); letter-spacing: .1em; }
+.zh .wheel-item { font-family: var(--zh); font-size: 17px; letter-spacing: .06em; }
+
+/* 開關 */
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; padding: 14px 2px 4px; cursor: pointer; }
+.switch input {
+  appearance: none; -webkit-appearance: none; width: 46px; height: 28px; border-radius: 14px; flex: none;
+  background: var(--line); position: relative; margin: 0; cursor: pointer; transition: background .2s;
+}
+.switch input::after {
+  content: &#x27;&#x27;; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--paper); box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s;
+}
+.switch input:checked { background: var(--bottle); }
+.switch input:checked::after { transform: translateX(18px); }
+.switch input:focus-visible { outline: 2px solid var(--bottle); outline-offset: 2px; }
+.off { opacity: .28; pointer-events: none; }
+
+/* 自動示範時的手指點擊圈 */
+.touch {
+  position: fixed; z-index: 50; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; pointer-events: none;
+  background: rgba(36,57,47,.16); border: 1.5px solid rgba(36,57,47,.5); animation: touch .65s ease-out forwards;
+}
+@keyframes touch { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.3); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .seg, .card.attn::after, .card.attn .cue .tap { animation: none; }
+  .sub-a i, .sub-a span, .sub-a b { animation: none; opacity: 1; transform: none; }
+  .sheet, .scrim { transition: none; }
+}
+&lt;/style&gt;
+
+&lt;main class=&quot;page&quot;&gt;
+  &lt;header class=&quot;rise&quot;&gt;
+    &lt;div class=&quot;eyebrow&quot;&gt;RATNA 瑯納&lt;/div&gt;
+    &lt;h1&gt;配石工具&lt;/h1&gt;
+  &lt;/header&gt;
+
+
+  &lt;button class=&quot;card rise&quot; id=&quot;cardDate&quot; type=&quot;button&quot; aria-haspopup=&quot;dialog&quot;&gt;
+    &lt;span class=&quot;lbl&quot;&gt;出生日期與時間&lt;/span&gt;
+    &lt;span class=&quot;body&quot;&gt;
+      &lt;span class=&quot;cue&quot;&gt;&lt;svg class=&quot;tap&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.3&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;&lt;path d=&quot;M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.6a5 5 0 0 1-4-2L4.6 15.3a1.4 1.4 0 0 1 2.1-1.8L9 15.5&quot;/&gt;&lt;/svg&gt;&lt;span&gt;點擊此處設定&lt;/span&gt;&lt;/span&gt;
+      &lt;span class=&quot;val&quot; id=&quot;vDate&quot; hidden&gt;&lt;/span&gt;
+    &lt;/span&gt;
+    &lt;svg class=&quot;edit&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.4&quot;&gt;&lt;path d=&quot;M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4&quot;/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+
+  &lt;button class=&quot;card rise&quot; id=&quot;cardPlace&quot; type=&quot;button&quot; aria-haspopup=&quot;dialog&quot;&gt;
+    &lt;span class=&quot;lbl&quot;&gt;出生地點&lt;/span&gt;
+    &lt;span class=&quot;body&quot;&gt;
+      &lt;span class=&quot;cue&quot;&gt;&lt;svg class=&quot;tap&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.3&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;&gt;&lt;path d=&quot;M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5a1.5 1.5 0 0 1 3 0V11m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.6a5 5 0 0 1-4-2L4.6 15.3a1.4 1.4 0 0 1 2.1-1.8L9 15.5&quot;/&gt;&lt;/svg&gt;&lt;span&gt;點這邊設定國家、城市&lt;/span&gt;&lt;/span&gt;
+      &lt;span class=&quot;val&quot; id=&quot;vPlace&quot; hidden&gt;&lt;/span&gt;
+    &lt;/span&gt;
+    &lt;svg class=&quot;edit&quot; width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.4&quot;&gt;&lt;path d=&quot;M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4&quot;/&gt;&lt;/svg&gt;
+  &lt;/button&gt;
+
+  &lt;section class=&quot;result&quot; id=&quot;result&quot; aria-live=&quot;polite&quot; hidden&gt;&lt;/section&gt;
+&lt;/main&gt;
+
+&lt;div class=&quot;scrim&quot; id=&quot;scrim&quot;&gt;&lt;/div&gt;
+
+&lt;section class=&quot;sheet&quot; id=&quot;sDate&quot; tabindex=&quot;-1&quot; role=&quot;dialog&quot; aria-modal=&quot;true&quot; aria-labelledby=&quot;tDate&quot;&gt;
+  &lt;div class=&quot;grabber&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;bar&quot;&gt;&lt;h3 id=&quot;tDate&quot;&gt;出生日期與時間&lt;/h3&gt;&lt;button class=&quot;done&quot; type=&quot;button&quot;&gt;完成&lt;/button&gt;&lt;/div&gt;
+  &lt;div class=&quot;heads date-grid&quot;&gt;&lt;span&gt;年份&lt;/span&gt;&lt;span&gt;月份&lt;/span&gt;&lt;span&gt;日期&lt;/span&gt;&lt;span&gt;時間&lt;/span&gt;&lt;/div&gt;
+  &lt;div class=&quot;cols date-grid&quot;&gt;
+    &lt;div id=&quot;wy&quot;&gt;&lt;/div&gt;&lt;div id=&quot;wm&quot;&gt;&lt;/div&gt;&lt;div id=&quot;wd&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;hm&quot; id=&quot;tbox&quot;&gt;&lt;div id=&quot;whh&quot;&gt;&lt;/div&gt;&lt;span class=&quot;colon&quot;&gt;:&lt;/span&gt;&lt;div id=&quot;wmm&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;label class=&quot;switch&quot; for=&quot;unk&quot;&gt;&lt;span&gt;不知道出生時間&lt;/span&gt;&lt;input type=&quot;checkbox&quot; id=&quot;unk&quot;&gt;&lt;/label&gt;
+&lt;/section&gt;
+
+&lt;section class=&quot;sheet&quot; id=&quot;sPlace&quot; tabindex=&quot;-1&quot; role=&quot;dialog&quot; aria-modal=&quot;true&quot; aria-labelledby=&quot;tPlace&quot;&gt;
+  &lt;div class=&quot;grabber&quot;&gt;&lt;/div&gt;
+  &lt;div class=&quot;bar&quot;&gt;&lt;h3 id=&quot;tPlace&quot;&gt;出生地點&lt;/h3&gt;&lt;button class=&quot;done&quot; type=&quot;button&quot;&gt;完成&lt;/button&gt;&lt;/div&gt;
+  &lt;div class=&quot;heads place-grid&quot;&gt;&lt;span&gt;國家／地區&lt;/span&gt;&lt;span&gt;城市&lt;/span&gt;&lt;/div&gt;
+  &lt;div class=&quot;cols place-grid zh&quot;&gt;&lt;div id=&quot;wc&quot;&gt;&lt;/div&gt;&lt;div id=&quot;wci&quot;&gt;&lt;/div&gt;&lt;/div&gt;
+  &lt;p class=&quot;hint&quot;&gt;沒有的城市，選同國家最近的就好。&lt;/p&gt;
+&lt;/section&gt;
+
+&lt;script&gt;
+/* ---------- 朋友原本的地點清單：[國家, 時區, [[城市, 時區(可省略)]]] ---------- */
+const PLACES = [[&quot;臺灣&quot;,&quot;Asia/Taipei&quot;,[[&quot;臺北市&quot;],[&quot;新北市&quot;],[&quot;基隆市&quot;],[&quot;桃園市&quot;],[&quot;新竹市&quot;],[&quot;新竹縣&quot;],[&quot;苗栗縣&quot;],[&quot;臺中市&quot;],[&quot;彰化縣&quot;],[&quot;南投縣&quot;],[&quot;雲林縣&quot;],[&quot;嘉義市&quot;],[&quot;嘉義縣&quot;],[&quot;臺南市&quot;],[&quot;高雄市&quot;],[&quot;屏東縣&quot;],[&quot;宜蘭縣&quot;],[&quot;花蓮縣&quot;],[&quot;臺東縣&quot;],[&quot;澎湖縣&quot;],[&quot;金門縣&quot;],[&quot;連江縣（馬祖）&quot;]]],[&quot;香港&quot;,&quot;Asia/Hong_Kong&quot;,[[&quot;香港&quot;]]],[&quot;澳門&quot;,&quot;Asia/Macau&quot;,[[&quot;澳門&quot;]]],[&quot;中國大陸&quot;,&quot;Asia/Shanghai&quot;,[[&quot;北京&quot;],[&quot;上海&quot;],[&quot;廣州&quot;],[&quot;深圳&quot;],[&quot;廈門&quot;],[&quot;福州&quot;],[&quot;杭州&quot;],[&quot;南京&quot;],[&quot;蘇州&quot;],[&quot;天津&quot;],[&quot;重慶&quot;],[&quot;成都&quot;],[&quot;武漢&quot;],[&quot;西安&quot;],[&quot;瀋陽&quot;],[&quot;哈爾濱&quot;],[&quot;昆明&quot;]]],[&quot;日本&quot;,&quot;Asia/Tokyo&quot;,[[&quot;東京&quot;],[&quot;大阪&quot;],[&quot;京都&quot;],[&quot;名古屋&quot;],[&quot;橫濱&quot;],[&quot;福岡&quot;],[&quot;札幌&quot;],[&quot;沖繩&quot;]]],[&quot;韓國&quot;,&quot;Asia/Seoul&quot;,[[&quot;首爾&quot;],[&quot;釜山&quot;],[&quot;濟州&quot;]]],[&quot;新加坡&quot;,&quot;Asia/Singapore&quot;,[[&quot;新加坡&quot;]]],[&quot;馬來西亞&quot;,&quot;Asia/Kuala_Lumpur&quot;,[[&quot;吉隆坡&quot;],[&quot;檳城&quot;],[&quot;新山&quot;],[&quot;馬六甲&quot;],[&quot;怡保&quot;],[&quot;古晉&quot;,&quot;Asia/Kuching&quot;],[&quot;亞庇&quot;,&quot;Asia/Kuching&quot;]]],[&quot;泰國&quot;,&quot;Asia/Bangkok&quot;,[[&quot;曼谷&quot;],[&quot;清邁&quot;],[&quot;普吉島&quot;]]],[&quot;越南&quot;,&quot;Asia/Ho_Chi_Minh&quot;,[[&quot;胡志明市&quot;],[&quot;河內&quot;],[&quot;峴港&quot;]]],[&quot;菲律賓&quot;,&quot;Asia/Manila&quot;,[[&quot;馬尼拉&quot;],[&quot;宿霧&quot;]]],[&quot;印尼&quot;,&quot;Asia/Jakarta&quot;,[[&quot;雅加達&quot;],[&quot;泗水&quot;],[&quot;峇里島&quot;,&quot;Asia/Makassar&quot;]]],[&quot;印度&quot;,&quot;Asia/Kolkata&quot;,[[&quot;新德里&quot;],[&quot;孟買&quot;],[&quot;班加羅爾&quot;],[&quot;加爾各答&quot;]]],[&quot;澳洲&quot;,&quot;Australia/Sydney&quot;,[[&quot;雪梨&quot;],[&quot;墨爾本&quot;,&quot;Australia/Melbourne&quot;],[&quot;布里斯本&quot;,&quot;Australia/Brisbane&quot;],[&quot;黃金海岸&quot;,&quot;Australia/Brisbane&quot;],[&quot;伯斯&quot;,&quot;Australia/Perth&quot;],[&quot;阿德雷德&quot;,&quot;Australia/Adelaide&quot;],[&quot;坎培拉&quot;]]],[&quot;紐西蘭&quot;,&quot;Pacific/Auckland&quot;,[[&quot;奧克蘭&quot;],[&quot;威靈頓&quot;],[&quot;基督城&quot;]]],[&quot;英國&quot;,&quot;Europe/London&quot;,[[&quot;倫敦&quot;],[&quot;曼徹斯特&quot;],[&quot;伯明罕&quot;],[&quot;利物浦&quot;],[&quot;愛丁堡&quot;],[&quot;格拉斯哥&quot;],[&quot;牛津&quot;],[&quot;劍橋&quot;]]],[&quot;愛爾蘭&quot;,&quot;Europe/Dublin&quot;,[[&quot;都柏林&quot;]]],[&quot;法國&quot;,&quot;Europe/Paris&quot;,[[&quot;巴黎&quot;],[&quot;里昂&quot;],[&quot;尼斯&quot;]]],[&quot;德國&quot;,&quot;Europe/Berlin&quot;,[[&quot;柏林&quot;],[&quot;慕尼黑&quot;],[&quot;法蘭克福&quot;],[&quot;漢堡&quot;]]],[&quot;荷蘭&quot;,&quot;Europe/Amsterdam&quot;,[[&quot;阿姆斯特丹&quot;],[&quot;鹿特丹&quot;]]],[&quot;義大利&quot;,&quot;Europe/Rome&quot;,[[&quot;羅馬&quot;],[&quot;米蘭&quot;],[&quot;佛羅倫斯&quot;]]],[&quot;西班牙&quot;,&quot;Europe/Madrid&quot;,[[&quot;馬德里&quot;],[&quot;巴塞隆納&quot;]]],[&quot;瑞士&quot;,&quot;Europe/Zurich&quot;,[[&quot;蘇黎世&quot;],[&quot;日內瓦&quot;]]],[&quot;奧地利&quot;,&quot;Europe/Vienna&quot;,[[&quot;維也納&quot;]]],[&quot;美國&quot;,&quot;America/Los_Angeles&quot;,[[&quot;洛杉磯&quot;],[&quot;舊金山&quot;],[&quot;聖荷西&quot;],[&quot;聖地牙哥&quot;],[&quot;西雅圖&quot;],[&quot;波特蘭&quot;],[&quot;拉斯維加斯&quot;],[&quot;加州&quot;],[&quot;鳳凰城&quot;,&quot;America/Phoenix&quot;],[&quot;丹佛&quot;,&quot;America/Denver&quot;],[&quot;鹽湖城&quot;,&quot;America/Denver&quot;],[&quot;芝加哥&quot;,&quot;America/Chicago&quot;],[&quot;休士頓&quot;,&quot;America/Chicago&quot;],[&quot;達拉斯&quot;,&quot;America/Chicago&quot;],[&quot;奧斯汀&quot;,&quot;America/Chicago&quot;],[&quot;德州&quot;,&quot;America/Chicago&quot;],[&quot;紐約&quot;,&quot;America/New_York&quot;],[&quot;波士頓&quot;,&quot;America/New_York&quot;],[&quot;華盛頓特區&quot;,&quot;America/New_York&quot;],[&quot;費城&quot;,&quot;America/New_York&quot;],[&quot;紐澤西&quot;,&quot;America/New_York&quot;],[&quot;亞特蘭大&quot;,&quot;America/New_York&quot;],[&quot;邁阿密&quot;,&quot;America/New_York&quot;],[&quot;奧蘭多&quot;,&quot;America/New_York&quot;],[&quot;夏威夷&quot;,&quot;Pacific/Honolulu&quot;],[&quot;阿拉斯加&quot;,&quot;America/Anchorage&quot;]]],[&quot;加拿大&quot;,&quot;America/Toronto&quot;,[[&quot;多倫多&quot;],[&quot;蒙特婁&quot;],[&quot;渥太華&quot;],[&quot;溫哥華&quot;,&quot;America/Vancouver&quot;],[&quot;卡加利&quot;,&quot;America/Edmonton&quot;],[&quot;愛民頓&quot;,&quot;America/Edmonton&quot;]]]];
+
+/* ---------- 朋友原本的對照表與計算（星座算法：恆星黃道；潮汐：月亮星座主星） ---------- */
+const SIGNS = [&#x27;白羊座&#x27;,&#x27;金牛座&#x27;,&#x27;雙子座&#x27;,&#x27;巨蟹座&#x27;,&#x27;獅子座&#x27;,&#x27;處女座&#x27;,&#x27;天秤座&#x27;,&#x27;天蠍座&#x27;,&#x27;射手座&#x27;,&#x27;摩羯座&#x27;,&#x27;水瓶座&#x27;,&#x27;雙魚座&#x27;];
+const SIGN_LORD = [&#x27;火星&#x27;,&#x27;金星&#x27;,&#x27;水星&#x27;,&#x27;月亮&#x27;,&#x27;太陽&#x27;,&#x27;水星&#x27;,&#x27;金星&#x27;,&#x27;計都&#x27;,&#x27;木星&#x27;,&#x27;土星&#x27;,&#x27;羅睺&#x27;,&#x27;木星&#x27;];
+const STONE = { 太陽:&#x27;紅石榴&#x27;, 月亮:&#x27;白貝殼&#x27;, 火星:&#x27;紅紋石&#x27;, 水星:&#x27;孔雀石&#x27;, 木星:&#x27;黃水晶&#x27;, 金星:&#x27;白月光&#x27;, 土星:&#x27;青金石&#x27;, 羅睺:&#x27;煙晶&#x27;, 計都:&#x27;貓眼石&#x27; };
+
+function offsetMin(tz, utcMs) {
+  const parts = new Intl.DateTimeFormat(&#x27;en-US&#x27;, { timeZone: tz, hourCycle: &#x27;h23&#x27;, year: &#x27;numeric&#x27;, month: &#x27;2-digit&#x27;, day: &#x27;2-digit&#x27;, hour: &#x27;2-digit&#x27;, minute: &#x27;2-digit&#x27;, second: &#x27;2-digit&#x27; }).formatToParts(new Date(utcMs));
+  const g = t =&gt; +parts.find(p =&gt; p.type === t).value;
+  return (Date.UTC(g(&#x27;year&#x27;), g(&#x27;month&#x27;) - 1, g(&#x27;day&#x27;), g(&#x27;hour&#x27;) % 24, g(&#x27;minute&#x27;), g(&#x27;second&#x27;)) - utcMs) / 60000;
+}
+function localToUtc(y, m, d, hh, mm, tz) {
+  const guess = Date.UTC(y, m - 1, d, hh, mm);
+  const o1 = offsetMin(tz, guess);
+  let t = guess - o1 * 60000;
+  const o2 = offsetMin(tz, t);
+  if (o2 !== o1) t = guess - o2 * 60000;
+  return new Date(t);
+}
+function matchAt(date) {
+  const T = (date.getTime() / 86400000 + 2440587.5 - 2451545) / 36525;
+  const ayan = 23.857 + 1.39694 * T;
+  const n = x =&gt; ((x - ayan) % 360 + 360) % 360;
+  const sun = n(Astronomy.SunPosition(date).elon), moon = n(Astronomy.EclipticGeoMoon(date).lon);
+  const sunSign = Math.floor(sun / 30), moonSign = Math.floor(moon / 30);
+  const sunLord = SIGN_LORD[sunSign], tideLord = SIGN_LORD[moonSign];
+  return { sunSign: SIGNS[sunSign], moonSign: SIGNS[moonSign], sunLord, tideLord, sunStone: STONE[sunLord], tideStone: STONE[tideLord], sunDeg: sun % 30, moonDeg: moon % 30 };
+}
+function match(b) {
+  if (b.known) {
+    const t = localToUtc(b.y, b.m, b.d, b.hh, b.mm, b.tz);
+    const r = matchAt(t);
+    const a = matchAt(new Date(t.getTime() - 30 * 60000)), c = matchAt(new Date(t.getTime() + 30 * 60000));
+    const flags = [];
+    if (a.sunStone !== r.sunStone || c.sunStone !== r.sunStone) flags.push(&#x27;向陽接近換座，出生時間差 30 分鐘就會不同&#x27;);
+    if (a.tideStone !== r.tideStone || c.tideStone !== r.tideStone) flags.push(&#x27;潮汐接近換座，出生時間差 30 分鐘就會不同&#x27;);
+    return { ...r, sunAlt: null, tideAlt: null, flags };
+  }
+  const s = matchAt(localToUtc(b.y, b.m, b.d, 0, 0, b.tz)), e = matchAt(localToUtc(b.y, b.m, b.d, 23, 59, b.tz));
+  const flags = [];
+  let sunAlt = null, tideAlt = null;
+  if (s.sunStone !== e.sunStone) { sunAlt = e.sunStone; flags.push(`時間不明：向陽可能是${s.sunStone}或${e.sunStone}`); }
+  if (s.tideStone !== e.tideStone) { tideAlt = e.tideStone; flags.push(`時間不明：潮汐可能是${s.tideStone}或${e.tideStone}`); }
+  return { ...s, sunAlt, tideAlt, flags, noTime: true };
+}
+
+/* ---------- 滾輪：原生捲動＋吸附，只准上下滑；第一格是「未選」 ---------- */
+function makeWheel(host, opt) {
+  const row = 42, rows = 5;
+  const box = document.createElement(&#x27;div&#x27;);
+  box.className = &#x27;wheel&#x27;;
+  box.style.height = `${row * rows}px`;
+  box.style.setProperty(&#x27;--row&#x27;, `${row}px`);
+  const list = document.createElement(&#x27;div&#x27;);
+  list.style.paddingBlock = `${(row * (rows - 1)) / 2}px`;
+  box.append(list);
+  host.append(box);
+  let items = [], idx = 0, timer = 0;
+
+  /* 滑動中不做任何事，全交給瀏覽器原生捲動；停下來才讀值 */
+  function settle() {
+    clearTimeout(timer);
+    if (!box.clientHeight) return;
+    const i = Math.max(0, Math.min(items.length - 1, Math.round(box.scrollTop / row)));
+    if (i !== idx) { idx = i; opt.onChange(items[i].value); }
+  }
+  function tween(to) {
+    const from = box.scrollTop, dist = to - from;
+    if (!dist) return;
+    const dur = Math.min(900, 260 + Math.abs(dist / row) * 45), t0 = performance.now();
+    box.style.scrollSnapType = &#x27;none&#x27;;
+    const step = now =&gt; {
+      const p = Math.min(1, (now - t0) / dur);
+      box.scrollTop = from + dist * (1 - Math.pow(1 - p, 3));
+      if (p &lt; 1) requestAnimationFrame(step); else box.style.scrollSnapType = &#x27;&#x27;;
+    };
+    requestAnimationFrame(step);
+  }
+  box.addEventListener(&#x27;scroll&#x27;, () =&gt; { clearTimeout(timer); timer = setTimeout(settle, 90); }, { passive: true });
+  box.addEventListener(&#x27;scrollend&#x27;, settle);
+  list.addEventListener(&#x27;click&#x27;, e =&gt; {
+    const n = e.target.closest(&#x27;.wheel-item&#x27;);
+    if (n) tween(+n.dataset.i * row);
+  });
+  const api = {
+    get value() { return items[idx] &amp;&amp; items[idx].value; },
+    setItems(next, keep, fallback) {
+      items = next;
+      list.innerHTML = items.map((it, i) =&gt;
+        `&lt;div class=&quot;wheel-item${it.value === null ? &#x27; ph&#x27; : &#x27;&#x27;}&quot; data-i=&quot;${i}&quot;&gt;${it.label}&lt;/div&gt;`).join(&#x27;&#x27;);
+      let j = items.findIndex(it =&gt; it.value === keep);
+      if (j &lt; 0) j = fallback || 0;
+      idx = j;
+      api.sync();
+      if (items[j].value !== keep) opt.onChange(items[j].value);
+    },
+    setValue(v, smooth) {
+      const j = Math.max(0, items.findIndex(it =&gt; it.value === v));
+      if (smooth) tween(j * row); else { idx = j; api.sync(); }
+    },
+    sync() { box.scrollTop = idx * row; },
+    settle,
+    get count() { return items.length; },
+  };
+  api.setItems(opt.items, null);
+  return api;
+}
+
+/* ---------- 狀態：一開始全部未選 ---------- */
+const $ = s =&gt; document.querySelector(s);
+const pad2 = n =&gt; String(n).padStart(2, &#x27;0&#x27;);
+const range = (a, b) =&gt; Array.from({ length: b - a + 1 }, (_, i) =&gt; a + i);
+const WEEK = &#x27;日一二三四五六&#x27;;
+const THIS_YEAR = new Date().getFullYear();
+const S = { y: null, m: null, d: null, hh: null, mm: null, unknown: false, country: null, city: null };
+const blank = label =&gt; ({ value: null, label });
+const YEARS = [blank(&#x27;- - - -&#x27;), ...range(1920, THIS_YEAR).reverse().map(y =&gt; ({ value: y, label: `${y}&lt;small&gt;民國${y - 1911}&lt;/small&gt;` }))];
+const MONTHS = [blank(&#x27;- -&#x27;), ...range(1, 12).map(m =&gt; ({ value: m, label: `${pad2(m)}&lt;small&gt;月&lt;/small&gt;` }))];
+const dayItems = () =&gt; {
+  const n = S.y &amp;&amp; S.m ? new Date(S.y, S.m, 0).getDate() : 31;
+  return [blank(&#x27;- -&#x27;), ...range(1, n).map(d =&gt; ({ value: d, label: `${pad2(d)}&lt;small&gt;日&lt;/small&gt;` }))];
+};
+const HOURS = [blank(&#x27;- -&#x27;), ...range(0, 23).map(h =&gt; ({ value: h, label: pad2(h) }))];
+const MINS = [blank(&#x27;- -&#x27;), ...range(0, 59).map(m =&gt; ({ value: m, label: pad2(m) }))];
+const COUNTRIES = [blank(&#x27;- -&#x27;), ...PLACES.map(([name]) =&gt; ({ value: name, label: name }))];
+const cityItems = () =&gt; {
+  const c = PLACES.find(p =&gt; p[0] === S.country);
+  return [blank(&#x27;- -&#x27;), ...(c ? c[2].map(([name]) =&gt; ({ value: name, label: name })) : [])];
+};
+
+const W = {};
+const wheel = (id, items, set) =&gt; (W[id] = makeWheel($(`#w${id}`), { items, onChange: v =&gt; { set(v); render(); } }));
+wheel(&#x27;y&#x27;, YEARS, v =&gt; { S.y = v; refreshDays(); });
+wheel(&#x27;m&#x27;, MONTHS, v =&gt; { S.m = v; refreshDays(); });
+wheel(&#x27;d&#x27;, dayItems(), v =&gt; { S.d = v; });
+wheel(&#x27;hh&#x27;, HOURS, v =&gt; { S.hh = v; });
+wheel(&#x27;mm&#x27;, MINS, v =&gt; { S.mm = v; });
+wheel(&#x27;c&#x27;, COUNTRIES, v =&gt; { S.country = v; refreshCities(); });
+wheel(&#x27;ci&#x27;, cityItems(), v =&gt; { S.city = v; });
+
+function refreshDays() {
+  const next = dayItems();
+  if (next.length !== W.d.count) W.d.setItems(next, S.d, S.d ? next.length - 1 : 0); // 天數不變就不重建
+}
+function refreshCities() {
+  const next = cityItems();
+  W.ci.setItems(next, S.city, next.length === 2 ? 1 : 0); // 只有一個城市就直接選好
+}
+
+const dateDone = () =&gt; !!(S.y &amp;&amp; S.m &amp;&amp; S.d &amp;&amp; (S.unknown || (S.hh !== null &amp;&amp; S.mm !== null)));
+const placeDone = () =&gt; !!(S.country &amp;&amp; S.city);
+
+/* 滾動中只更新面板本身 */
+function render() {
+  $(&#x27;#unk&#x27;).checked = S.unknown;
+  $(&#x27;#tbox&#x27;).classList.toggle(&#x27;off&#x27;, S.unknown);
+}
+
+/* 按完成後才把結果寫回卡片，每一段依序浮出 */
+const shown = { date: &#x27;&#x27;, place: &#x27;&#x27;, result: &#x27;&#x27; };
+const ZH = &#x27;〇一二三四五六七八九&#x27;;
+const zhNum = n =&gt; n &lt; 10 ? ZH[n]
+  : n &lt; 20 ? `十${n % 10 ? ZH[n % 10] : &#x27;&#x27;}`
+  : n &lt; 100 ? `${ZH[Math.floor(n / 10)]}十${n % 10 ? ZH[n % 10] : &#x27;&#x27;}`
+  : `${ZH[Math.floor(n / 100)]}百${n % 100 === 0 ? &#x27;&#x27; : n % 100 &lt; 10 ? `〇${ZH[n % 10]}` : n % 100 &lt; 20 ? `一${zhNum(n % 100)}` : zhNum(n % 100)}`;
+const subHTML = (roc, wd) =&gt;
+  `&lt;span class=&quot;sub-a&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;span&gt;民國${zhNum(roc)}年&lt;/span&gt;&lt;b&gt;・&lt;/b&gt;&lt;span&gt;星期${wd}&lt;/span&gt;&lt;i&gt;&lt;/i&gt;&lt;/span&gt;`;
+const segs = (parts, from = 0) =&gt; parts.map((p, i) =&gt; `&lt;span class=&quot;seg&quot; style=&quot;--i:${from + i}&quot;&gt;${p}&lt;/span&gt;`).join(&#x27;&#x27;);
+function commit() {
+  const dk = dateDone() ? [S.y, S.m, S.d, S.unknown ? &#x27;x&#x27; : `${S.hh}:${S.mm}`].join(&#x27;-&#x27;) : &#x27;&#x27;;
+  if (dk !== shown.date) {
+    shown.date = dk;
+    $(&#x27;#vDate&#x27;).hidden = !dk;
+    if (dk) {
+      const time = S.unknown ? &#x27;&lt;span class=&quot;na&quot;&gt;時間不詳&lt;/span&gt;&#x27; : `${pad2(S.hh)}:${pad2(S.mm)}`;
+      const wd = WEEK[new Date(S.y, S.m - 1, S.d).getDay()];
+      $(&#x27;#vDate&#x27;).innerHTML =
+        `&lt;span class=&quot;row&quot;&gt;${segs([S.y, &#x27;.&#x27;, pad2(S.m), &#x27;.&#x27;, pad2(S.d)])}&lt;span class=&quot;seg clock&quot; style=&quot;--i:5&quot;&gt;${time}&lt;/span&gt;&lt;/span&gt;` +
+        subHTML(S.y - 1911, wd);
+    }
+  }
+  const pk = placeDone() ? `${S.country}-${S.city}` : &#x27;&#x27;;
+  if (pk !== shown.place) {
+    shown.place = pk;
+    $(&#x27;#vPlace&#x27;).hidden = !pk;
+    if (pk) $(&#x27;#vPlace&#x27;).innerHTML = `&lt;span class=&quot;where&quot;&gt;${segs([S.country, &#x27;・&#x27;, S.city])}&lt;/span&gt;`;
+  }
+  $(&#x27;#cardDate&#x27;).classList.toggle(&#x27;filled&#x27;, !!dk);
+  $(&#x27;#cardPlace&#x27;).classList.toggle(&#x27;filled&#x27;, !!pk);
+  $(&#x27;#cardDate&#x27;).classList.toggle(&#x27;attn&#x27;, !dk);
+  $(&#x27;#cardPlace&#x27;).classList.toggle(&#x27;attn&#x27;, !!dk &amp;&amp; !pk);
+  const rk = dk &amp;&amp; pk ? `${dk}|${pk}` : &#x27;&#x27;;
+  if (rk !== shown.result) { shown.result = rk; renderResult(!!rk); }
+}
+
+function renderResult(ready) {
+  const box = $(&#x27;#result&#x27;);
+  box.hidden = !ready;
+  if (!ready) { box.innerHTML = &#x27;&#x27;; return; }
+  if (typeof Astronomy === &#x27;undefined&#x27;) { box.innerHTML = &#x27;&lt;div class=&quot;note&quot;&gt;計算元件沒有載入成功，請重新整理頁面。&lt;/div&gt;&#x27;; return; }
+  const c = PLACES.find(p =&gt; p[0] === S.country);
+  const city = c[2].find(x =&gt; x[0] === S.city);
+  const r = match({ y: S.y, m: S.m, d: S.d, hh: S.hh || 0, mm: S.mm || 0, known: !S.unknown, tz: city[1] || c[1] });
+  const deg = v =&gt; r.noTime ? &#x27;&#x27; : ` ${v.toFixed(1)}°`;
+  const card = (i, k, stone, alt, why) =&gt;
+    `&lt;div class=&quot;r seg&quot; style=&quot;--i:${i}&quot;&gt;&lt;span class=&quot;k&quot;&gt;${k}&lt;/span&gt;&lt;span class=&quot;stone&quot;&gt;${stone}${alt ? `&lt;small&gt; 或 ${alt}&lt;/small&gt;` : &#x27;&#x27;}&lt;/span&gt;&lt;span class=&quot;why&quot;&gt;${why}&lt;/span&gt;&lt;/div&gt;`;
+  box.innerHTML =
+    card(4, &#x27;向陽手繩&#x27;, r.sunStone, r.sunAlt, `太陽在${r.sunSign}${deg(r.sunDeg)}&lt;br&gt;主星${r.sunLord}`) +
+    card(6, &#x27;潮汐手繩&#x27;, r.tideStone, r.tideAlt, `月亮在${r.moonSign}${deg(r.moonDeg)}&lt;br&gt;定位星${r.tideLord}`) +
+    (r.flags.length ? `&lt;div class=&quot;note seg&quot; style=&quot;--i:8&quot;&gt;需確認：${r.flags.join(&#x27;；&#x27;)}&lt;/div&gt;`
+      : r.noTime ? &#x27;&lt;div class=&quot;note ok seg&quot; style=&quot;--i:8&quot;&gt;時間不明，但當天不論幾點出生，結果都相同。&lt;/div&gt;&#x27; : &#x27;&#x27;);
+}
+
+/* ---------- 面板開關 ---------- */
+let opened = null;
+function open(which) {
+  opened = which;
+  document.documentElement.classList.add(&#x27;lock&#x27;, `open-${which}`);
+  (which === &#x27;date&#x27; ? [&#x27;y&#x27;, &#x27;m&#x27;, &#x27;d&#x27;, &#x27;hh&#x27;, &#x27;mm&#x27;] : [&#x27;c&#x27;, &#x27;ci&#x27;]).forEach(k =&gt; W[k].sync());
+  $(which === &#x27;date&#x27; ? &#x27;#sDate&#x27; : &#x27;#sPlace&#x27;).focus({ preventScroll: true });
+}
+function close() {
+  if (!opened) return;
+  Object.values(W).forEach(w =&gt; w.settle()); // 剛甩完就按完成，也先把停住的值讀進來
+  document.documentElement.classList.remove(&#x27;lock&#x27;, &#x27;open-date&#x27;, &#x27;open-place&#x27;);
+  $(opened === &#x27;date&#x27; ? &#x27;#cardDate&#x27; : &#x27;#cardPlace&#x27;).focus({ preventScroll: true });
+  opened = null;
+  setTimeout(commit, 180);
+}
+$(&#x27;#cardDate&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; open(&#x27;date&#x27;));
+$(&#x27;#cardPlace&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; open(&#x27;place&#x27;));
+$(&#x27;#scrim&#x27;).addEventListener(&#x27;click&#x27;, close);
+document.querySelectorAll(&#x27;.done&#x27;).forEach(b =&gt; b.addEventListener(&#x27;click&#x27;, close));
+addEventListener(&#x27;keydown&#x27;, e =&gt; { if (e.key === &#x27;Escape&#x27;) close(); });
+$(&#x27;#unk&#x27;).addEventListener(&#x27;change&#x27;, e =&gt; { S.unknown = e.target.checked; render(); });
+
+render();
+commit();
+
+/* ---------- 自動示範（網址加 #demo）：點一下畫面就停 ---------- */
+if (location.hash === &#x27;#demo&#x27; || window.__DEMO) {
+  let stopped = false;
+  [&#x27;pointerdown&#x27;, &#x27;touchstart&#x27;, &#x27;wheel&#x27;].forEach(t =&gt;
+    addEventListener(t, e =&gt; { if (e.isTrusted) stopped = true; }, { capture: true, passive: true }));
+  const say = n =&gt; { try { parent.postMessage({ ratnaStep: n }, &#x27;*&#x27;); } catch (e) { /* 沒有外框就略過 */ } };
+  const wait = ms =&gt; new Promise(r =&gt; setTimeout(r, ms));
+  const touch = el =&gt; {
+    const r = el.getBoundingClientRect();
+    const t = document.createElement(&#x27;div&#x27;);
+    t.className = &#x27;touch&#x27;;
+    t.style.left = `${r.left + r.width / 2}px`;
+    t.style.top = `${r.top + r.height / 2}px`;
+    document.body.append(t);
+    setTimeout(() =&gt; t.remove(), 700);
+    el.click();
+  };
+  const steps = [
+    [0, () =&gt; {}, 2800],
+    [1, () =&gt; touch($(&#x27;#cardDate&#x27;)), 900],
+    [2, () =&gt; W.y.setValue(1995, true), 1000],
+    [2, () =&gt; W.m.setValue(4, true), 800],
+    [2, () =&gt; W.d.setValue(7, true), 900],
+    [2, () =&gt; W.hh.setValue(14, true), 800],
+    [2, () =&gt; W.mm.setValue(30, true), 1200],
+    [3, () =&gt; touch($(&#x27;#sDate .done&#x27;)), 2800],
+    [4, () =&gt; touch($(&#x27;#cardPlace&#x27;)), 900],
+    [5, () =&gt; W.c.setValue(&#x27;臺灣&#x27;, true), 900],
+    [5, () =&gt; W.ci.setValue(&#x27;臺北市&#x27;, true), 1200],
+    [6, () =&gt; touch($(&#x27;#sPlace .done&#x27;)), 4500],
+    [0, () =&gt; location.reload(), 0],
+  ];
+  (async () =&gt; {
+    await wait(300);
+    for (const [n, fn, ms] of steps) {
+      if (stopped) return;
+      say(n);
+      fn();
+      await wait(ms);
+    }
+  })();
+}
+&lt;/script&gt;
+
+&lt;/body&gt;&lt;/html&gt;"></iframe></div></div>
+<div class="side">
+  <h1>動畫示範</h1>
+  <p>手機框會自動重播整段操作。點一下手機畫面就停，可以自己滑；按下面按鈕重新播放。</p>
+  <ol id="steps"><li data-n="0">一進來：生日卡的手指提示在動</li><li data-n="1">點「點擊此處設定」，下方滑出滾輪</li><li data-n="2">上下滾：1995 年 04 月 07 日 14:30</li><li data-n="3">按「完成」：日期一排依序浮出</li><li data-n="4">換地點卡提示，點「點這邊設定國家、城市」</li><li data-n="5">滾輪選台灣・台北市</li><li data-n="6">按「完成」：地點浮出，礦石結果出現</li></ol>
+  <button id="replay" type="button">重新播放</button>
+</div>
+<script>
+const steps = document.querySelectorAll('#steps li');
+addEventListener('message', e => {
+  if (!e.data || e.data.ratnaStep === undefined) return;
+  steps.forEach(li => li.classList.toggle('on', +li.dataset.n === e.data.ratnaStep));
+});
+document.getElementById('replay').addEventListener('click', () => {
+  const f = document.getElementById('app'); f.srcdoc = f.srcdoc;
+});
+</script>
+</body></html>
